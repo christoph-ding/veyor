@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-exporter
+  namespace: backend-veyor
+  labels:
+    app: celery-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-exporter
+  template:
+    metadata:
+      labels:
+        app: celery-exporter
+    spec:
+      containers:
+      - name: celery-exporter
+        image: ovalmoney/celery-exporter:latest
+        env:
+        - name: CELERY_BROKER_URL
+          value: "redis://redis-service:6379/0"
+        ports:
+        - containerPort: 9540
+          name: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: celery-exporter-service
+  namespace: backend-veyor
+  labels:
+    app: celery-exporter
+spec:
+  ports:
+  - port: 9540
+    targetPort: 9540
+    name: metrics
+  selector:
+    app: celery-exporter

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+      metadata:
+        labels:
+          app: nginx-ingress
+      spec:
+        serviceAccountName: nginx-ingress
+        containers:
+        - name: nginx-ingress
+          image: nginx/nginx-ingress:3.5.0 # F5 NGINX Ingress Controller image
+          imagePullPolicy: IfNotPresent
+          ports:
+          - name: http
+            containerPort: 80
+          - name: https
+            containerPort: 443
+          - name: readiness-port
+            containerPort: 8081
+          env:
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          args:
+            # 1. Status & Service Mapping (Points 4 & 6 from your notes)
+            # - "-report-ingress-status"
+            - "-external-service=edge-service"
+            - "-ingress-class=nginx"
+            
+            # 2. The Cluster Bypass Gates (Point 5 from your notes)
+            - "-enable-leader-election=false"
+            - "-enable-custom-resources=false" # ◄─── Dynamically disables CRD watch loops

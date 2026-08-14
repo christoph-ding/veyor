@@ -1,0 +1,23 @@
+apiVersion: v1
+data:
+  prometheus.yml: |-
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      - job_name: "prometheus"
+        static_configs:
+          - targets: ["localhost:9090"]
+
+      - job_name: "veyor-api"
+        static_configs:
+          - targets: ["veyor-api:80"]
+
+      - job_name: "celery-exporter"
+        static_configs:
+          - targets: ["celery-exporter-service:9540"]
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: backend-veyor

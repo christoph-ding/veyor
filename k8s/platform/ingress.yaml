@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress
+  namespace: backend-echo
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: echo.com
+    http:
+      paths:
+      - path: /echo
+        pathType: Prefix
+        backend:
+          service:
+            name: echo-service
+            port:
+              number: 80

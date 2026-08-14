@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: veyor-api
+  namespace: backend-veyor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: veyor-api
+  template:
+    metadata:
+      labels:
+        app: veyor-api
+    spec:
+      containers:
+      - name: veyor-api
+        # Nodes pull internally via localhost:5000 (Minikube registry add-on default)
+        image: 10.108.83.154:5001/veyor-api:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            cpu: "50m"      # 0.05 CPU cores (enough for lightweight API startup)
+            memory: 32Mi    # Very low baseline
+          limits:
+            cpu: "250m"     # 0.25 CPU cores max during spikes
+            memory: 128Mi   # Safety ceiling
+        env:
+        # Redis Connection Details
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        # Postgres Connection Details
+        - name: POSTGRES_HOST
+          value: "metadata-postgres-service"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: metadata-postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: metadata-postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: metadata-postgres-secret
+              key: POSTGRES_DB
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: veyor-api
+  namespace: backend-veyor
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+  selector:
+    app: veyor-api
+

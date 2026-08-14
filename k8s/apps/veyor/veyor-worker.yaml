@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: veyor-worker
+  namespace: backend-veyor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: veyor-worker
+  template:
+    metadata:
+      labels:
+        app: veyor-worker
+    spec:
+      containers:
+      - name: worker
+        # Nodes pull internally via localhost:5000 (Minikube registry add-on default)
+        image: 10.108.83.154:5001/veyor-api:v1
+        imagePullPolicy: Always
+        # OVERRIDES Dockerfile CMD to launch Celery instead of Uvicorn!
+        command: ["celery", "-A", "app.celery_app", "worker", "-E", "--loglevel=info"]        
+        env:
+        # Redis Connection Details
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        # Postgres Connection Details
+        - name: POSTGRES_HOST
+          value: "metadata-postgres-service"
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: metadata-postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: metadata-postgres-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: metadata-postgres-secret
+              key: POSTGRES_DB
